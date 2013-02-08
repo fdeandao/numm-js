@@ -8,9 +8,10 @@ var nodemailer = require("nodemailer");
 var NUMM = function(conf){
 	this._conf = conf;
 
-	this._client = couchdb.srv("http://"+ this._conf.host +":"+ this._conf.port);
-	this._client.auth = this._conf.user +":"+ this._conf.password;
-	this._cdb = this._client.db(this._conf.dbName);
+	this._client =
+		couchdb.srv("http://"+ this._conf.couch.host +":"+ this._conf.couch.port);
+	this._client.auth = this._conf.couch.user +":"+ this._conf.couch.password;
+	this._cdb = this._client.db(this._conf.couch.dbName);
 	return this;
 }
 
@@ -29,6 +30,9 @@ exports.Errors = {
 	}
 	,"StaleID":{
 		"message":"Stale information."
+	}
+	,"UnknownEmail":{
+		"message":"Unknown email address."
 	}
 	,"BadCredentials":{
 		"message":"Bad Credentials."
@@ -84,7 +88,7 @@ NUMM.prototype._sendSolicitation = function(regData, cb){
 
 }
 
-NUMM.prototype.solicit = function(emailAddress, cb){
+NUMM.prototype.solicit = function(emailAddress, auxData, cb){
 	var numm = this;
 
 	/* Check to see if email has already been solicited. */
@@ -113,12 +117,34 @@ NUMM.prototype.solicit = function(emailAddress, cb){
 			else{
 				/* Insert a solicit record. */
 				var solicitDoc = {
-					 "email" : emailAddress
+					 "email" : emailAddress,
+					 "aux" : auxData
 				};
 				numm._sendSolicitation(solicitDoc, cb);
 			}
 		}
 	);
+}
+
+NUMM.prototype.getSolicit = function(email, solicitID, cb){
+	var numm = this;
+	var solicitDoc = numm._cdb.doc("numm.solicit." + email);
+	solicitDoc.get(function(err, doc){
+		if(err){
+			if(err.error == "not_found")
+				cb(exports.Errors.UnknownEmail);
+			else
+				cb(exports.Errors.FailedOp);
+			return;
+		}
+
+		if(solicitID != email.link){
+			cb(exports.Errors.BadCredentials);
+			return;
+		}
+
+		cb(null, solicitDoc);
+	});
 }
 
 /* Initiate a password reset.

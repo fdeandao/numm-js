@@ -1,0 +1,34 @@
+{
+
+	"nodemailer" : {
+		"service" : "Gmail"
+		,"maxConnections" : 1
+		,"auth" : {
+			"user" : "YOUREMAIL@gmail.com"
+			,"pass" : "PASSWORD"
+		}
+	}
+
+	,"couch":{
+		"host" : "localhost"
+		,"port" : 5984
+		,"user" : "dbender"
+		,"password" : "45rontardo"
+		,"dbName" : "nummtest"
+	}
+
+	,"templates" : {
+		"solicit" : {
+			"fromFullName" : "NUMM Test"
+			,"fromEmail":"numm@numm.com"
+			,"subject":"Numm signup test"
+			,"message" : "Signup at this link: http://SOMEURL/SOLICIT_LINK"
+		}
+		,"resetPass" : {
+			"fromFullName" : "NUMM Test"
+			,"fromEmail":"numm@numm.com"
+			,"subject":"NUMM password reset"
+			,"message" : "Reset your account password at this link: http://SOMEURL/RESETPASS_LINK"
+		}
+	}
+}
