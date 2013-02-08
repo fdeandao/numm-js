@@ -1,0 +1,9 @@
+{
+	"name" : "numm-js"
+	,"description" : "Node User Management Module"
+	,"author" : "Dave Bender"
+	,"dependencies" : {
+		"nodemailer" : ">= 0.3.0"
+		,"couchdb-api" : ">= 1.2.2"
+	}
+}
