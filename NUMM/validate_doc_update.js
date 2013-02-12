@@ -40,31 +40,30 @@ function (newDoc, savedDoc, userCtx){
 					throw({"forbidden":"Link must update on change!"});
 			}
 		}
-		else{
-			/* This could have embedded attributes. */
-			if("numm.signup" in newDoc){
-				var signup = newDoc["numm.signup"];
-				var fields = {
-					"username" : "string"
-					,"email" : "string"
-					,"secretWord" : "string"
-					,"secretWordSalt" : "string"
-					,"password" : "string"
-					,"passwordSalt" : "string"
-				};
+	}
+	else{
+		/* This could have embedded attributes. */
+		if("numm.signup" in newDoc){
+			var signup = newDoc["numm.signup"];
+			var fields = {
+				"email" : "string"
+				,"secretWord" : "string"
+				,"secretWordSalt" : "string"
+				,"password" : "string"
+				,"passwordSalt" : "string"
+			};
 
-				require(signup, fields);
+			require(signup, fields);
 
-				/* password must be 64 characters or null. */
-				if(!(null === signup.password || signup.password.length != 64))
-					throw({"forbidden":"Invalid password length!"});
+			/* password must be 64 characters or null. */
+			if(!(null === signup.password || signup.password.length != 64))
+				throw({"forbidden":"Invalid password length!"});
 
-				if(signup.password && signup.passwordSalt.length != 64)
-					throw({"forbidden":"Invalid password salt length!"});
+			if(signup.password && signup.passwordSalt.length != 64)
+				throw({"forbidden":"Invalid password salt length!"});
 
-				if(signup.secretWordSalt.length != 64)
-					throw({"forbidden":"Invalid secret word salt length!"});
-			}
+			if(signup.secretWordSalt.length != 64)
+				throw({"forbidden":"Invalid secret word salt length!"});
 		}
 	}
 }
