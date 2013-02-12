@@ -37,6 +37,9 @@ exports.Errors = {
 	,"BadCredentials":{
 		"message":"Bad Credentials."
 	}
+	,"UnknownSolicitation":{
+		"message":"Bad Solicitation."
+	}
 };
 
 NUMM.prototype._sendEmail = function(email, cb){
@@ -126,25 +129,36 @@ NUMM.prototype.solicit = function(emailAddress, auxData, cb){
 	);
 }
 
-NUMM.prototype.getSolicit = function(email, solicitID, cb){
+NUMM.prototype.getSolicit = function(solicitID, cb){
 	var numm = this;
-	var solicitDoc = numm._cdb.doc("numm.solicit." + email);
-	solicitDoc.get(function(err, doc){
-		if(err){
-			if(err.error == "not_found")
-				cb(exports.Errors.UnknownEmail);
-			else
+
+	/* Check to see if email has already been solicited. */
+	/* Check for username collision. */
+	var ddoc = numm._cdb.ddoc("NUMM");
+	var v = ddoc.view("solicits");
+	v.query(
+		{
+			"startkey" : solicitID
+			,"endkey" : solicitID + "\u9999"
+			,"include_docs" : true
+			,"reduce" : false
+		},
+		function(err, solicitations){
+			if(err){
 				cb(exports.Errors.FailedOp);
-			return;
-		}
+				return;
+			}
 
-		if(solicitID != email.link){
-			cb(exports.Errors.BadCredentials);
-			return;
+			if(solicitations.rows.length){
+				/* Just send the email again to the user,
+				 * but update the link. */
+				cb(null, solicitations.rows[0].doc);
+			}
+			else{
+				cb(exports.Errors.UnknownSolicitation);
+			}
 		}
-
-		cb(null, solicitDoc);
-	});
+	);
 }
 
 /* Initiate a password reset.
@@ -206,6 +220,23 @@ NUMM.prototype.requestReset = function(emailAddress, cb){
 			}
 		}
 	);
+}
+
+/* Add user signup to the database.
+ * @param solicitDoc Solicit associated with signup request
+ * @param signupDoc Document containing
+ *
+ * "numm.signup" : {
+ * 	"email" : "somthing@email.com"
+ * 	,"password" : "CLEARTEXT"
+ * 	,"secretWord" : "CLEARTEXT"
+ * }
+ *
+ * It can contain other user defined fields outside the "numm.signup" field.
+ * @param cb called when updated
+ * */
+NUMM.prototype.submitSignup = function(solicitDoc, signupDoc, cb){
+	var numm = this;
 }
 
 /* Initiate a password reset.
