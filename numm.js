@@ -40,6 +40,9 @@ exports.Errors = {
 	,"UnknownSolicitation":{
 		"message":"Bad Solicitation."
 	}
+	,"AlreadySignedUp":{
+		"message":"Already signed up."
+	}
 };
 
 NUMM.prototype._sendEmail = function(email, cb){
@@ -226,6 +229,7 @@ NUMM.prototype.requestReset = function(emailAddress, cb){
  * @param solicitDoc Solicit associated with signup request
  * @param signupDoc Document containing
  *
+ * "_id" 
  * "numm.signup" : {
  * 	"email" : "somthing@email.com"
  * 	,"password" : "CLEARTEXT"
@@ -237,6 +241,37 @@ NUMM.prototype.requestReset = function(emailAddress, cb){
  * */
 NUMM.prototype.submitSignup = function(solicitDoc, signupDoc, cb){
 	var numm = this;
+
+	/* Check to see if email has already been solicited. */
+	/* Check for username collision. */
+	var ddoc = numm._cdb.ddoc("NUMM");
+	var v = ddoc.view("solicitStatus");
+	v.query(
+		{
+			"startkey" : solicitDoc.email
+			,"endkey" : solicitDoc.email + "\u9999"
+			,"reduce" : true
+		},
+		function(err, solicitations){
+			if(err){
+				cb(exports.Errors.FailedOp);
+				return;
+			}
+
+			/* If the reduce value is greater than 1 then a signup
+			 * has already been submitted. */
+			if(solicitations.rows.length && solicitations.rows[0].value != 0x1){
+				numm._cdb.doc(signupDoc._id);
+				signupDoc.body = signupDoc;
+				signupDoc.save(cb);
+			}
+			else{
+				cb(exports.Errors.AlreadySignedUp);
+				return;
+			}
+		}
+	);
+
 }
 
 /* Initiate a password reset.
