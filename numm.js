@@ -52,7 +52,7 @@ NUMM.prototype._sendEmail = function(email, cb){
 	smtpTransport.sendMail(email, function(error, response){
 		smtpTransport.close();
 		if(error){
-			console.error("NUMM " + JSON.stringify(err));
+			console.error("NUMM " + JSON.stringify(error));
 			cb(exports.Errors.FailedToSend);
 			return;
 		}
@@ -270,14 +270,35 @@ NUMM.prototype.submitSignup = function(solicitDoc, signupDoc, cb){
 			/* If the reduce value is greater than 1 then a signup
 			 * has already been submitted. */
 			if(solicitations.rows.length && solicitations.rows[0].value == 0x1){
-				var d = numm._cdb.doc(signupDoc._id);
-				d.body = signupDoc;
-				d.save(cb);
+				/* Create salts for the secretWord and password. */
+				/* Generate new salts and new hashes. */
+				var signup = signupDoc["numm.signup"];
+				crypto.randomBytes(64, function(err, bytes){
+					if(err){
+						console.error("NUMM " + JSON.stringify(err));
+						cb(exports.Errors.FailedOp);
+						return;
+					}
+
+					/* Encrypt password. */
+					signup.passwordSalt = bytes.slice(0,32).toString("hex");
+					signup.password =
+						hash.update(emailAddress + signup.password + signup.passwordSalt).digest("hex");
+
+					/* Encrypt secret . */
+					signup.secretWordSalt = bytes.slice(32).toString("hex");
+					signup.secretWord =
+						hash.update(emailAddress + signup.secretWord + signup.secretWordSalt).digest("hex");
+					var d = numm._cdb.doc(signupDoc._id);
+					d.body = signupDoc;
+					d.save(cb);
+				});
 			}
 			else{
 				cb(exports.Errors.AlreadySignedUp);
 				return;
 			}
+
 		}
 	);
 
