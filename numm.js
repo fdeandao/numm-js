@@ -52,6 +52,7 @@ NUMM.prototype._sendEmail = function(email, cb){
 	smtpTransport.sendMail(email, function(error, response){
 		smtpTransport.close();
 		if(error){
+			console.error("NUMM " + JSON.stringify(err));
 			cb(exports.Errors.FailedToSend);
 			return;
 		}
@@ -65,6 +66,7 @@ NUMM.prototype._sendSolicitation = function(regData, cb){
 	/* Get a UUID for the link ID. */
 	crypto.randomBytes(32, function(err, bytes){
 		if(err){
+			console.error("NUMM " + JSON.stringify(err));
 			cb(exports.Errors.CryptoError);
 			return;
 		}
@@ -75,6 +77,7 @@ NUMM.prototype._sendSolicitation = function(regData, cb){
 		regDoc.body = regData;
 		regDoc.save(function(err){
 			if(err){
+				console.error("NUMM " + JSON.stringify(err));
 				cb(exports.Errors.FailedOp);
 				return;
 			}
@@ -110,6 +113,7 @@ NUMM.prototype.solicit = function(emailAddress, auxData, cb){
 		},
 		function(err, solicitations){
 			if(err){
+				console.error("NUMM " + JSON.stringify(err));
 				cb(exports.Errors.FailedOp);
 				return;
 			}
@@ -148,6 +152,7 @@ NUMM.prototype.getSolicit = function(solicitID, cb){
 		},
 		function(err, solicitations){
 			if(err){
+				console.error("NUMM " + JSON.stringify(err));
 				cb(exports.Errors.FailedOp);
 				return;
 			}
@@ -181,6 +186,7 @@ NUMM.prototype.requestReset = function(emailAddress, cb){
 		},
 		function(err, entries){
 			if(err){
+				console.error("NUMM " + JSON.stringify(err));
 				cb(exports.Errors.FailedOp);
 				return;
 			}
@@ -193,6 +199,7 @@ NUMM.prototype.requestReset = function(emailAddress, cb){
 				/* Get a UUID for the link ID. */
 				crypto.randomBytes(32, function(err, bytes){
 					if(err){
+						console.error("NUMM " + JSON.stringify(err));
 						cb(exports.Errors.CryptoError);
 						return;
 					}
@@ -203,6 +210,7 @@ NUMM.prototype.requestReset = function(emailAddress, cb){
 					signupDoc.body = r;
 					signupDoc.save(function(err){
 						if(err){
+							console.error("NUMM " + JSON.stringify(err));
 							cb(exports.Errors.FailedOp);
 							return;
 						}
@@ -254,16 +262,17 @@ NUMM.prototype.submitSignup = function(solicitDoc, signupDoc, cb){
 		},
 		function(err, solicitations){
 			if(err){
+				console.error("NUMM " + JSON.stringify(err));
 				cb(exports.Errors.FailedOp);
 				return;
 			}
 
 			/* If the reduce value is greater than 1 then a signup
 			 * has already been submitted. */
-			if(solicitations.rows.length && solicitations.rows[0].value != 0x1){
-				numm._cdb.doc(signupDoc._id);
-				signupDoc.body = signupDoc;
-				signupDoc.save(cb);
+			if(solicitations.rows.length && solicitations.rows[0].value == 0x1){
+				var d = numm._cdb.doc(signupDoc._id);
+				d.body = signupDoc;
+				d.save(cb);
 			}
 			else{
 				cb(exports.Errors.AlreadySignedUp);
@@ -293,6 +302,7 @@ NUMM.prototype.updatePassword = function(linkID, emailAddress, secret, newPasswo
 		},
 		function(err, entries){
 			if(err){
+				console.error("NUMM " + JSON.stringify(err));
 				cb(exports.Errors.FailedOp);
 				return;
 			}
@@ -334,6 +344,7 @@ NUMM.prototype.updatePassword = function(linkID, emailAddress, secret, newPasswo
 			/* Generate new salts and new hashes. */
 			crypto.randomBytes(32, function(err, bytes){
 				if(err){
+					console.error("NUMM " + JSON.stringify(err));
 					cb(exports.Errors.FailedOp);
 					return;
 				}
