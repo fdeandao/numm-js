@@ -279,16 +279,18 @@ NUMM.prototype.submitSignup = function(solicitDoc, signupDoc, cb){
 						cb(exports.Errors.FailedOp);
 						return;
 					}
+					var hash = crypto.createHash("sha512");
 
 					/* Encrypt password. */
 					signup.passwordSalt = bytes.slice(0,32).toString("hex");
 					signup.password =
-						hash.update(emailAddress + signup.password + signup.passwordSalt).digest("hex");
+						hash.update(signup.email + signup.password + signup.passwordSalt).digest("hex");
 
 					/* Encrypt secret . */
+					hash = crypto.createHash("sha512");
 					signup.secretWordSalt = bytes.slice(32).toString("hex");
 					signup.secretWord =
-						hash.update(emailAddress + signup.secretWord + signup.secretWordSalt).digest("hex");
+						hash.update(signup.email + signup.secretWord + signup.secretWordSalt).digest("hex");
 					var d = numm._cdb.doc(signupDoc._id);
 					d.body = signupDoc;
 					d.save(cb);
