@@ -390,7 +390,7 @@ NUMM.prototype.updatePassword = function(linkID, emailAddress, secret, newPasswo
 NUMM.prototype.authenticate = function(userDoc, password, cb){
 	var signup = userDoc["numm.signup"];
 	var hash = crypto.createHash("sha512");
-	var enc = hash.update(signup.emailAddress + password + signup.passwordSalt);
+	var enc = hash.update(signup.email + password + signup.passwordSalt);
 	return signup.password == enc.digest("hex");
 }
 
