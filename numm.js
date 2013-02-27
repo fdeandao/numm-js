@@ -177,7 +177,7 @@ NUMM.prototype.requestReset = function(emailAddress, cb){
 	/* Check to see if email has already been solicited. */
 	/* Check for username collision. */
 	var ddoc = numm._cdb.ddoc("NUMM");
-	var v = ddoc.view("signup");
+	var v = ddoc.view("signups");
 	v.query(
 		{
 			"startkey" : emailAddress
@@ -204,11 +204,12 @@ NUMM.prototype.requestReset = function(emailAddress, cb){
 						return;
 					}
 
-					var signup = r["numm.signup"];
+					var signup = r.doc["numm.signup"];
 					signup.resetPass = bytes.toString("hex");
-					var signupDoc = numm._cdb.doc(r._id);
-					signupDoc.body = r;
-					signupDoc.save(function(err){
+					var signupDoc = numm._cdb.doc(r.doc._id);
+					signupDoc.body = r.doc;
+					signupDoc.body["numm.signup"] = signup;
+					signupDoc.save(function(err, regData){
 						if(err){
 							console.error("NUMM " + JSON.stringify(err));
 							cb(exports.Errors.FailedOp);
@@ -217,12 +218,12 @@ NUMM.prototype.requestReset = function(emailAddress, cb){
 
 						var template = numm._conf.templates.resetPass;
 						var email = {
-							"to" : regData.email
+							"to" : emailAddress
 							,"from" : template.fromFullName + "<" + template.fromEmail + ">"
 							,"subject" : template.subject
-							,"text" : template.message.replace(/RESETPASS_LINK/g, regData.link)
+							,"text" : template.message.replace(/RESETPASS_LINK/g, signup.resetPass)
 						};
-						numm._sendEmail(emailAddress, emailStr, cb);
+						numm._sendEmail(email, cb);
 					});
 				});
 			}
@@ -311,12 +312,12 @@ NUMM.prototype.submitSignup = function(solicitDoc, signupDoc, cb){
  * @param emailAddress Address associated with user.
  * @param secret If linkID is null, current user password; secret otherwise.
  * @param newPassword new password for user. */
-NUMM.prototype.updatePassword = function(linkID, emailAddress, secret, newPassword, cb){
+NUMM.prototype.updatePassword = function(linkID, emailAddress, secret, newPassword, checkSecret, cb){
 	var numm = this;
 
 	/* Look for user sign up. */
 	var ddoc = numm._cdb.ddoc("NUMM");
-	var v = ddoc.view("signup");
+	var v = ddoc.view("signups");
 	v.query(
 		{
 			"startkey" : emailAddress
@@ -336,7 +337,7 @@ NUMM.prototype.updatePassword = function(linkID, emailAddress, secret, newPasswo
 			}
 
 			var r = entries.rows[0];
-			var signup = r["numm.signup"];
+			var signup = r.value["numm.signup"];
 
 			var hash = crypto.createHash("sha512");
 			if(linkID){
@@ -344,12 +345,13 @@ NUMM.prototype.updatePassword = function(linkID, emailAddress, secret, newPasswo
 					cb({"message" : "Invalid reset code!"});
 					return;
 				}
-
-				/* Verify secret. */
-				var enc = hash.update(emailAddress + secret + signup.secretWordSalt);
-				if(signup.secret != enc.digest("hex")){
-					cb(exports.Errors.BadCredentials);
-					return;
+				if(checkSecret == true){
+					/* Verify secret. */
+					var enc = hash.update(emailAddress + secret + signup.secretWordSalt);
+					if(signup.secret != enc.digest("hex")){
+						cb(exports.Errors.BadCredentials);
+						return;
+					}
 				}
 
 				/* Remove reset pass field. */
@@ -378,8 +380,9 @@ NUMM.prototype.updatePassword = function(linkID, emailAddress, secret, newPasswo
 					hash.update(emailAddress + newPassword + signup.passwordSalt).digest("hex");
 
 				/* Update record. */
-				var signupDoc = numm._cdb.doc(r._id);
-				signupDoc.body = r;
+				r.doc["numm.signup"] = signup;
+				var signupDoc = numm._cdb.doc(r.id);
+				signupDoc.body = r.doc;
 				signupDoc.save(cb);
 
 			});

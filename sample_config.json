@@ -4,16 +4,16 @@
 		"service" : "Gmail"
 		,"maxConnections" : 1
 		,"auth" : {
-			"user" : "YOUREMAIL@gmail.com"
-			,"pass" : "PASSWORD"
+			"user" : "fdeandao@tesi.co.cc"
+			,"pass" : ""
 		}
 	}
 
 	,"couch":{
 		"host" : "localhost"
 		,"port" : 5984
-		,"user" : "dbender"
-		,"password" : "45rontardo"
+		,"user" : ""
+		,"password" : ""
 		,"dbName" : "nummtest"
 	}
 
@@ -22,13 +22,13 @@
 			"fromFullName" : "NUMM Test"
 			,"fromEmail":"numm@numm.com"
 			,"subject":"Numm signup test"
-			,"message" : "Signup at this link: http://SOMEURL/SOLICIT_LINK"
+			,"message" : "Signup at this link: http://10.81.81.134:8888/desktop/signup.html?link=SOLICIT_LINK"
 		}
 		,"resetPass" : {
 			"fromFullName" : "NUMM Test"
 			,"fromEmail":"numm@numm.com"
 			,"subject":"NUMM password reset"
-			,"message" : "Reset your account password at this link: http://SOMEURL/RESETPASS_LINK"
+			,"message" : "Reset your account password at this link: http://10.81.81.134:8888/desktop/signup.html?reset=RESETPASS_LINK"
 		}
 	}
 }
